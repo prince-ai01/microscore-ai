@@ -69,7 +69,7 @@ st.divider()
 
 # Explainable AI (SHAP) Visual Section
 st.subheader("Explainable AI (TreeSHAP) Feature Attribution")
-st.markdown("Quantifies how each financial feature pushed the model toward approval (+ values) or rejection (- values).")
+st.markdown("Quantifies how each financial feature impacted the approval chance (+% helped approval, -% increased risk).")
 
 if isinstance(shap_values, list):
     applicant_shap = shap_values[1][0]
@@ -77,17 +77,34 @@ else:
     applicant_shap = shap_values[0, :, 1] if len(shap_values.shape) == 3 else shap_values[0]
 
 features = ["Daily Income", "Daily Expense", "Monthly Savings", "UPI Count"]
+
+# Convert raw SHAP values to % impact
 shap_df = pd.DataFrame({
     "Feature": features,
-    "SHAP Contribution Value": applicant_shap
-}).sort_values(by="SHAP Contribution Value", ascending=True)
+    "Percentage Impact": applicant_shap * 100
+}).sort_values(by="Percentage Impact", ascending=True)
 
-fig, ax = plt.subplots(figsize=(8, 3.5))
-colors = ['#2ecc71' if x > 0 else '#e74c3c' for x in shap_df["SHAP Contribution Value"]]
-ax.barh(shap_df["Feature"], shap_df["SHAP Contribution Value"], color=colors)
+fig, ax = plt.subplots(figsize=(9, 4))
+colors = ['#2ecc71' if x > 0 else '#e74c3c' for x in shap_df["Percentage Impact"]]
+bars = ax.barh(shap_df["Feature"], shap_df["Percentage Impact"], color=colors)
+
+# Add clear +X.X% or -X.X% labels directly on each bar
+max_abs_val = max(abs(shap_df["Percentage Impact"]).max(), 0.1)
+padding = max_abs_val * 0.04
+
+for bar in bars:
+    val = bar.get_width()
+    if val >= 0:
+        ax.text(val + padding, bar.get_y() + bar.get_height() / 2, f"+{val:.1f}%", 
+                va='center', ha='left', fontsize=10, weight='bold', color='#1e824c')
+    else:
+        ax.text(val - padding, bar.get_y() + bar.get_height() / 2, f"{val:.1f}%", 
+                va='center', ha='right', fontsize=10, weight='bold', color='#c0392b')
+
 ax.axvline(0, color="grey", linestyle="--", linewidth=0.8)
-ax.set_xlabel("Impact on Loan Approval (SHAP Value)")
-ax.set_title("Local Feature Contribution Breakdown")
+ax.set_xlim(-max_abs_val * 1.35, max_abs_val * 1.35)
+ax.set_xlabel("Impact on Approval Chance (%)", fontsize=11)
+ax.set_title("Vendor-Friendly Factor Breakdown (% Influence)", fontsize=12, fontweight='bold')
 plt.tight_layout()
 
 st.pyplot(fig)
