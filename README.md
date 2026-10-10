@@ -34,7 +34,7 @@ The model scores applicants using alternative, high-velocity operational signals
 - **Language:** Python
 - **Interface:** Streamlit
 - **Machine Learning & Explainability:** Scikit-learn, SHAP
-- **Data Manipulation & Visualization:** Pandas, NumPy, Matplotlib / Altair
+- **Data Manipulation & Visualization:** Pandas, NumPy, Matplotlib 
 
 ---
 
